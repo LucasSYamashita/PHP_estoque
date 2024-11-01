@@ -4,7 +4,7 @@
 ##Descrição do Projeto
 Este projeto é um sistema de gerenciamento de inventário para lojas, desenvolvido para ajudar na administração eficiente dos produtos em estoque. Com uma interface amigável, os administradores podem facilmente adicionar, atualizar e excluir itens, além de monitorar o estoque em tempo real. O sistema inclui funcionalidades como alertas de baixo estoque e geração de relatórios, proporcionando uma gestão completa e eficaz.
 
-##Recursos Principais
+## Recursos Principais
 Cadastro de Produtos
 
 Gerenciamento de Estoque
