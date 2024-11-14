@@ -1,0 +1,24 @@
+{
+    "name": "laboratorio/lucas-syama",
+    "autoload": {
+        "psr-4": {
+            "Laboratorio\\LucasSyama\\": "src/"
+        }
+    },
+    "autoload-dev" : {
+
+        "psr-4" : {
+        
+        "Tests\\" : "tests"
+        
+        }
+    },
+    "authors": [
+        {
+            "name": "LucasS"
+        }
+    ],
+    "require-dev": {
+            "phpunit/phpunit": "*"
+        }
+}
