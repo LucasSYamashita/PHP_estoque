@@ -1,72 +1,111 @@
+<?php
+require_once __DIR__ . '../../../models/categoria_model.php';  // Inclui o arquivo da classe Categoria
+require_once __DIR__ . '../../../models/produto_model.php';  // Inclui o arquivo da classe Produto
+require_once __DIR__ . '../../../config/conexao.php';  // Inclui o arquivo de conexão
+
+$categoriaModel = new Categoria($conn);
+$categorias = $categoriaModel->getAllCategories(); // Recupera todas as categorias
+
+// Verifica se o ID do produto foi passado pela URL
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+
+    // Cria uma instância da classe Produto e recupera os dados do produto
+    $produtoModel = new Produto($conn);  // Adiciona a inicialização da instância aqui
+    $produto_data = $produtoModel->getProdutoById($id);  // Recupera o produto pelo ID
+
+    if ($produto_data) {
+        // Carrega os dados do produto
+        $nome_atual = $produto_data['nome'];
+        $preco_atual = $produto_data['preco'];
+        $quantidade_atual = $produto_data['quantidade'];
+        $id_categoria_atual = $produto_data['id_categoria'];  // Alteração para pegar id_categoria
+    } else {
+        echo "Produto não encontrado!";
+        exit;  // Interrompe a execução se o produto não for encontrado
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $nome = $_POST['nome'];
+    $preco = $_POST['preco'];
+    $quantidade = $_POST['quantidade'];
+    $id_categoria = $_POST['id_categoria'];  // Certifique-se de que é o ID
+
+    if ($produtoModel->update($nome, $preco, $quantidade, $id_categoria, $id)) {
+        header("Location: list.php");  // Redireciona para a lista
+    } else {
+        echo "Erro ao atualizar o produto.";
+    }
+}
+
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Editar Produto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Editar Produto</h1>
-    <form id="produtoForm">
-        <input type="hidden" id="id" name="id">
-        <label for="nome">Nome:</label>
-        <input type="text" id="nome" name="nome" required><br>
+    <?php include __DIR__ . '/../../navbar.php'; ?>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Editar Produto
+                        <a href="list.php" class="btn btn-danger float-end">Voltar</a>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                    <?php if (isset($produto_data)): ?>
+                        <form method="POST">
+                        <input type="hidden" name="id" value="<?= $id; ?>" />
+                        <div class="mb-3">
+                            <label for="nome">Nome:</label>
+                            <input type="text" id="nome" name="nome" value="<?= $nome_atual; ?>" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="preco">Preço:</label>
+                            <input type="number" id="preco" name="preco" value="<?= $preco_atual; ?>" step="0.01" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantidade">Quantidade:</label>
+                            <input type="number" id="quantidade" name="quantidade" value="<?= $quantidade_atual; ?>" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoria">Categoria:</label>
+                            <select id="categoria" name="id_categoria" required>
+    <?php foreach ($categorias as $categoria): ?>
+        <option value="<?= $categoria['id']; ?>" <?= $categoria['id'] == $id_categoria_atual ? 'selected' : ''; ?>>
+    <?= $categoria['nome']; ?>
+</option>
 
-        <label for="descricao">Descrição:</label>
-        <textarea id="descricao" name="descricao" required></textarea><br>
 
-        <label for="preco">Preço:</label>
-        <input type="number" id="preco" name="preco" step="0.01" required><br>
+    <?php endforeach; ?>
+</select>
 
-        <label for="quantidade">Quantidade:</label>
-        <input type="number" id="quantidade" name="quantidade" required><br>
+                        </div>
+                        <div class="mb-3">
+                            <button type="submit" name="edit_produto" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
 
-        <label for="categoria">Categoria:</label>
-        <select id="categoria" name="categoria_id" required></select><br>
-
-        <button type="submit">Salvar Alterações</button>
-    </form>
-
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const produtoId = urlParams.get('id');
-
-        fetch(`/produtos/${produtoId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('id').value = data.id;
-                document.getElementById('nome').value = data.nome;
-                document.getElementById('descricao').value = data.descricao;
-                document.getElementById('preco').value = data.preco;
-                document.getElementById('quantidade').value = data.quantidade;
-
-                fetch('/categorias')
-                    .then(response => response.json())
-                    .then(categorias => {
-                        const categoriaSelect = document.getElementById('categoria');
-                        categorias.forEach(categoria => {
-                            const option = document.createElement('option');
-                            option.value = categoria.id;
-                            option.textContent = categoria.nome;
-                            if (categoria.id == data.categoria_id) option.selected = true;
-                            categoriaSelect.appendChild(option);
-                        });
-                    });
-            });
-
-        document.getElementById('produtoForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
-            fetch(`/produtos/${produtoId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(Object.fromEntries(formData))
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) window.location.href = 'index.php';
-                else alert(data.error);
-            });
-        });
-    </script>
+                    <?php else: ?>
+                        <p>Produto não encontrado.</p>
+                    <?php endif; ?>                                               
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,60 +1,80 @@
-<!-- src/views/produtos/list.php -->
+<?php
+// Incluir o arquivo de modelo para a classe Produto
+require_once __DIR__ . '/../../models/produto_model.php';
+require_once __DIR__ . '/../../config/conexao.php';
+
+// Criar uma instância da classe Produto
+$produtoModel = new Produto($conn);
+
+// Listar produtos
+$produtos = $produtoModel->list(); // Chama o método 'list' para obter os produtos
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lista de Produtos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Lista de Produtos</h1>
-    <a href="create.php">Adicionar Novo Produto</a>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Preço</th>
-                <th>Quantidade</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="produtosTable">
-            <!-- Os produtos serão carregados aqui via JavaScript -->
-        </tbody>
-    </table>
+    <?php include __DIR__ . '/../../navbar.php'; ?>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Controle de Produtos 
+                            <a href="create.php" class="btn btn-primary float-end">Adicionar Produto</a>
+                            <a href="../../index.php" class="btn btn-danger float-end">Voltar</a>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                               <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Preço</th>
+                                    <th>Quantidade</th>
+                                    <th>Categoria</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($produtos as $produto): ?>
+                                    <tr>
+                                        <td><?= $produto['id']; ?></td>
+                                        <td><?= $produto['nome']; ?></td>
+                                        <td><?= $produto['preco']; ?></td>
+                                        <td><?= $produto['quantidade']; ?></td>
+                                        <td><?= $produto['nome_categoria']; ?></td>
+                                        <td>
+                                            <a href="edit.php?id=<?php echo $produto['id']; ?>" class="btn btn-success btn-sm">Editar</a>
+                                            <form action="delete.php" method="POST" style="display:inline;">
+                                                <input type="hidden" name="id" value="<?php echo $produto['id']; ?>">
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(<?php echo $produto['id']; ?>)">Excluir</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
 
     <script>
-        // Carregar produtos
-        fetch('/produtos')
-            .then(response => response.json())
-            .then(data => {
-                const produtosTable = document.getElementById('produtosTable');
-                data.forEach(produto => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${produto.id}</td>
-                        <td>${produto.nome}</td>
-                        <td>${produto.preco}</td>
-                        <td>${produto.quantidade}</td>
-                        <td>
-                            <a href="details.php?id=${produto.id}">Ver</a>
-                            <a href="edit.php?id=${produto.id}">Editar</a>
-                            <button onclick="deleteProduto(${produto.id})">Excluir</button>
-                        </td>
-                    `;
-                    produtosTable.appendChild(row);
-                });
-            });
-
-        // Função para excluir um produto
-        function deleteProduto(id) {
+        function confirmDelete(id) {
             if (confirm('Tem certeza que deseja excluir este produto?')) {
-                fetch(`/produtos/${id}`, { method: 'DELETE' })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) location.reload();
-                        else alert(data.error);
-                    });
+                // Se o usuário confirmar, redireciona para a URL de exclusão com o ID
+                window.location.href = 'delete.php?id=' + id;
             }
         }
     </script>

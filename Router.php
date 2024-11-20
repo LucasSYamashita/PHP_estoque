@@ -1,52 +1,81 @@
 <?php
-class Router {
-    private $db;
-    private $produtoController;
-    private $categoriaController;
 
-    public function __construct() {
-        // Criar conexão com o banco de dados
-        $this->db = (new Database())->getConnection();
-        // Inicializar controladores
-        $this->produtoController = new ProdutoController($this->db);
-        $this->categoriaController = new CategoriaController($this->db);
+// router.php
+require_once 'PHP_estoque/config/conexao.php';
+require_once 'controllers/categoria_controller.php';
+require_once 'controllers/produto_controller.php';
+
+class Router
+{
+    private $routes = [];
+
+    public function add($method, $path, $callback)
+    {
+        $path = preg_replace('/\{(\w+)\}/', '(\w+)', $path);
+        $this->routes[] = ['method' => $method, 'path' => "#^" . $path . "$#", 'callback' => $callback];
     }
 
-    public function handleRequest() {
-        $uri = $_SERVER['REQUEST_URI'];
-        $method = $_SERVER['REQUEST_METHOD'];
+    public function dispatch($requestedPath)
+    {
+        $requestedMethod = $_SERVER["REQUEST_METHOD"];
 
-        // Rotas para o CRUD de Produtos
-        if ($method === 'GET' && preg_match('/^\/produtos$/', $uri)) {
-            $this->produtoController->listar();
-        } elseif ($method === 'POST' && preg_match('/^\/produtos$/', $uri)) {
-            $dados = json_decode(file_get_contents("php://input"), true);
-            $this->produtoController->criar($dados);
-        } elseif ($method === 'GET' && preg_match('/^\/produtos\/(\d+)$/', $uri, $matches)) {
-            $this->produtoController->obter($matches[1]);
-        } elseif ($method === 'PUT' && preg_match('/^\/produtos\/(\d+)$/', $uri, $matches)) {
-            $dados = json_decode(file_get_contents("php://input"), true);
-            $this->produtoController->atualizar($matches[1], $dados);
-        } elseif ($method === 'DELETE' && preg_match('/^\/produtos\/(\d+)$/', $uri, $matches)) {
-            $this->produtoController->deletar($matches[1]);
+        foreach ($this->routes as $route) {
+            if ($route['method'] === $requestedMethod && preg_match($route['path'], $requestedPath, $matches)) {
+                array_shift($matches);
+                return call_user_func($route['callback'], ...$matches);
+            }
         }
-
-        // Rotas para o CRUD de Categorias
-        elseif ($method === 'GET' && preg_match('/^\/categorias$/', $uri)) {
-            $this->categoriaController->listar();
-        } elseif ($method === 'POST' && preg_match('/^\/categorias$/', $uri)) {
-            $dados = json_decode(file_get_contents("php://input"), true);
-            $this->categoriaController->criar($dados);
-        } elseif ($method === 'GET' && preg_match('/^\/categorias\/(\d+)$/', $uri, $matches)) {
-            $this->categoriaController->obter($matches[1]);
-        } elseif ($method === 'PUT' && preg_match('/^\/categorias\/(\d+)$/', $uri, $matches)) {
-            $dados = json_decode(file_get_contents("php://input"), true);
-            $this->categoriaController->atualizar($matches[1], $dados);
-        } elseif ($method === 'DELETE' && preg_match('/^\/categorias\/(\d+)$/', $uri, $matches)) {
-            $this->categoriaController->deletar($matches[1]);
-        } else {
-            http_response_code(404);
-            echo json_encode(["mensagem" => "Rota não encontrada."]);
-        }
+        echo "404 - Página não encontrada";
     }
 }
+
+// Instanciando o roteador
+$router = new Router();
+
+// Definir as rotas
+$router->add('GET', '/categoria/list', function() {
+    $controller = new CategoriaController($conn);
+    $controller->list();
+});
+
+$router->add('GET', '/categoria/create', function() {
+    $controller = new CategoriaController($conn);
+    $controller->create();
+});
+
+$router->add('GET', '/categoria/edit/{id}', function($id) {
+    $controller = new CategoriaController($conn);
+    $controller->edit($id);
+});
+
+$router->add('POST', '/categoria/delete', function() {
+    $controller = new CategoriaController($conn);
+    $controller->delete();
+});
+
+$router->add('GET', '/produto/list', function() {
+    $controller = new ProdutoController($conn);
+    $controller->list();
+});
+
+$router->add('GET', '/produto/create', function() {
+    $controller = new ProdutoController($conn);
+    $controller->create();
+});
+
+$router->add('GET', '/produto/edit/{id}', function($id) {
+    $controller = new ProdutoController($conn);
+    $controller->edit($id);
+});
+
+$router->add('POST', '/produto/delete', function() {
+    $controller = new ProdutoController($conn);
+    $controller->delete();
+});
+
+// Verifica a URL solicitada
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$router->dispatch($requestUri);
+
+
+?>
