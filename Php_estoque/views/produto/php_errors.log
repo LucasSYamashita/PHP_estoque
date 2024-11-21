@@ -1,0 +1,5 @@
+[19-Nov-2024 21:17:41 Europe/Berlin] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\PHP_estoque\Php_estoque\views\produto\list.php on line 3
+[19-Nov-2024 21:17:41 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\PHP_estoque\Php_estoque\views\produto\list.php:3
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\PHP_estoque\Php_estoque\views\produto\list.php on line 3
